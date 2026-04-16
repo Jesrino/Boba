@@ -9,6 +9,9 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_CASHIER = 'cashier';
+
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
@@ -20,6 +23,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'role',
         'password',
     ];
 
@@ -44,5 +48,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function isCashier(): bool
+    {
+        return $this->role === self::ROLE_CASHIER;
     }
 }
