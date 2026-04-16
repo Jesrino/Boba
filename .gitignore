@@ -4,3 +4,5 @@
 /storage/*.key 
 /.idea 
 /.vscode 
+.phpunit.result.cache
+/public/hot
