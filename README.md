@@ -1,7 +1,7 @@
-Group Members :
-Ayaman, Ken
-Dulay, Rhon Denver
-Pariño, Jester
+<h1> Group Members : <\h1>
+<p> Ayaman, Ken</p>
+<p> Dulay, Rhon Denver</p>
+<p> Pariño, Jester</p>
 
 
 
