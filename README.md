@@ -1,4 +1,4 @@
-<h1> Group Members : <\h1>
+<h1> Group Members : 
 <p> Ayaman, Ken</p>
 <p> Dulay, Rhon Denver</p>
 <p> Pariño, Jester</p>
