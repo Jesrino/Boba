@@ -18,7 +18,7 @@
             <button
                 type="button"
                 @click="$dispatch('open-product-modal', { mode: 'create' })"
-                class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white"
+                class="primary-action"
             >
                 + Add Menu
             </button>
@@ -44,27 +44,27 @@
         @endif
 
         <div class="grid gap-4 md:grid-cols-2">
-            <article class="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm">
+            <article class="metric-card">
                 <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Menus</p>
                 <h3 class="mt-3 font-display text-3xl font-semibold text-slate-900">{{ $products->count() }}</h3>
             </article>
-            <article class="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm">
+            <article class="metric-card">
                 <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Categories</p>
                 <h3 class="mt-3 font-display text-3xl font-semibold text-slate-900">{{ $categories->count() }}</h3>
             </article>
         </div>
 
-        <div class="mt-6 rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="panel-card mt-6 rounded-[30px]">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Categories</p>
+                    <p class="section-kicker">Categories</p>
                     <h3 class="mt-2 font-display text-2xl font-semibold text-slate-900">Browse menu by section</h3>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <template x-for="group in groupedProducts" :key="group.id">
                         <button
                             type="button"
-                            class="rounded-full px-4 py-2 text-sm font-medium"
+                            class="pill-tab"
                             :class="activeCategoryId === group.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'"
                             @click="activeCategoryId = group.id"
                             x-text="group.name"
@@ -99,11 +99,7 @@
                                 </div>
                                 <div class="mt-4 flex items-center justify-between gap-3">
                                     <span class="text-xs uppercase tracking-[0.2em] text-slate-400" x-text="product.supports_customization ? 'Customizable' : 'Quick add'"></span>
-                                    <button
-                                        type="button"
-                                        class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-                                        @click="openModal('edit', product)"
-                                    >
+                                    <button type="button" class="primary-action px-4 py-2" @click="openModal('edit', product)">
                                         Edit
                                     </button>
                                 </div>
@@ -216,8 +212,8 @@
                             Editing: <span class="font-semibold text-slate-900" x-text="selectedProduct?.name"></span>
                         </div>
                         <div class="flex gap-3">
-                            <button type="button" @click="closeModal()" class="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700">Cancel</button>
-                            <button type="submit" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white" x-text="modalMode === 'edit' ? 'Save changes' : 'Add menu item'"></button>
+                            <button type="button" @click="closeModal()" class="secondary-action">Cancel</button>
+                            <button type="submit" class="primary-action" x-text="modalMode === 'edit' ? 'Save changes' : 'Add menu item'"></button>
                         </div>
                     </div>
                 </form>

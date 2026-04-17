@@ -9,30 +9,84 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AdminController extends Controller
 {
-    public function dashboard(): View
+    public function dashboard(Request $request): View
     {
+        $trendPeriod = $request->string('trend')->lower()->value() === 'month' ? 'month' : '7d';
+        $trendEnd = $trendPeriod === 'month'
+            ? now()->endOfMonth()
+            : now()->endOfDay();
+        $trendStart = $trendPeriod === 'month'
+            ? now()->startOfYear()
+            : now()->copy()->subDays(6)->startOfDay();
+
         $transactions = Transaction::query()->with('cashier')->latest('paid_at')->latest()->limit(6)->get();
         $salesTotal = (float) Transaction::query()->sum('total_amount');
         $todaySales = (float) Transaction::query()->whereDate('paid_at', today())->sum('total_amount');
         $weeklySales = (float) Transaction::query()->whereDate('paid_at', '>=', today()->subDays(6))->sum('total_amount');
         $averageTicket = (float) Transaction::query()->avg('total_amount');
 
-        $salesTrend = collect(range(6, 0))->map(function (int $daysAgo): array {
-            $date = Carbon::today()->subDays($daysAgo);
+        $trendTransactions = Transaction::query()
+            ->whereBetween('paid_at', [$trendStart, $trendEnd])
+            ->get(['user_id', 'paid_at', 'total_amount']);
 
-            return [
-                'label' => $date->format('D'),
-                'date' => $date->format('M d'),
-                'sales' => (float) Transaction::query()->whereDate('paid_at', $date)->sum('total_amount'),
-                'orders' => Transaction::query()->whereDate('paid_at', $date)->count(),
-            ];
-        });
+        $trendSummaries = $trendTransactions
+            ->groupBy(function (Transaction $transaction) use ($trendPeriod): string {
+                return $trendPeriod === 'month'
+                    ? $transaction->paid_at?->format('Y-m')
+                    : $transaction->paid_at?->toDateString();
+            })
+            ->map(fn ($items) => [
+                'sales' => round((float) $items->sum('total_amount'), 2),
+                'orders' => $items->count(),
+                'cashiers' => $items->pluck('user_id')->filter()->unique()->count(),
+            ]);
+
+        $trendDates = $trendPeriod === 'month'
+            ? collect(range(1, (int) now()->month))->map(
+                fn (int $month) => now()->copy()->startOfYear()->month($month)->startOfMonth()
+            )
+            : collect(CarbonPeriod::create($trendStart->copy()->startOfDay(), $trendEnd->copy()->startOfDay()));
+
+        $salesTrend = $trendDates
+            ->map(function (Carbon $date) use ($trendPeriod, $trendSummaries): array {
+                $summaryKey = $trendPeriod === 'month'
+                    ? $date->format('Y-m')
+                    : $date->toDateString();
+
+                $summary = $trendSummaries->get($summaryKey, [
+                    'sales' => 0,
+                    'orders' => 0,
+                    'cashiers' => 0,
+                ]);
+
+                return [
+                    'label' => $trendPeriod === 'month' ? $date->format('M') : $date->format('D'),
+                    'date' => $trendPeriod === 'month' ? $date->format('Y') : $date->format('M d'),
+                    'sales' => (float) $summary['sales'],
+                    'orders' => (int) $summary['orders'],
+                    'cashiers' => (int) $summary['cashiers'],
+                ];
+            })
+            ->values();
+
+        $trendSalesTotal = (float) $salesTrend->sum('sales');
+        $trendOrderTotal = (int) $salesTrend->sum('orders');
+        $trendActiveCashiers = $trendTransactions->pluck('user_id')->filter()->unique()->count();
+
+        $topCashierInPeriod = Transaction::query()
+            ->selectRaw('user_id, COUNT(*) as order_count, SUM(total_amount) as sales_total, MAX(paid_at) as latest_paid_at')
+            ->with('cashier')
+            ->whereBetween('paid_at', [$trendStart, $trendEnd])
+            ->groupBy('user_id')
+            ->orderByDesc('sales_total')
+            ->first();
 
         $topProducts = TransactionItem::query()
             ->selectRaw('product_name, SUM(quantity) as quantity_sold, SUM(line_total) as gross_sales')
@@ -42,7 +96,7 @@ class AdminController extends Controller
             ->get();
 
         $cashierPerformance = Transaction::query()
-            ->selectRaw('user_id, COUNT(*) as order_count, SUM(total_amount) as sales_total')
+            ->selectRaw('user_id, COUNT(*) as order_count, SUM(total_amount) as sales_total, MAX(paid_at) as latest_paid_at')
             ->with('cashier')
             ->groupBy('user_id')
             ->orderByDesc('sales_total')
@@ -75,6 +129,13 @@ class AdminController extends Controller
             'weeklySales' => $weeklySales,
             'averageTicket' => $averageTicket,
             'transactions' => $transactions,
+            'trendPeriod' => $trendPeriod,
+            'trendStart' => $trendStart,
+            'trendEnd' => $trendEnd,
+            'trendSalesTotal' => $trendSalesTotal,
+            'trendOrderTotal' => $trendOrderTotal,
+            'trendActiveCashiers' => $trendActiveCashiers,
+            'topCashierInPeriod' => $topCashierInPeriod,
             'salesTrend' => $salesTrend,
             'salesTrendMax' => max(1, (float) $salesTrend->max('sales')),
             'topProducts' => $topProducts,

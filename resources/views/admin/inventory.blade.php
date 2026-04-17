@@ -8,7 +8,7 @@
             <button
                 type="button"
                 @click="$dispatch('open-inventory-modal', { mode: 'create' })"
-                class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white"
+                class="primary-action"
             >
                 + Add Ingredient
             </button>
@@ -33,7 +33,7 @@
         @endif
 
         <div class="grid gap-4 md:grid-cols-3">
-            <article class="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm">
+            <article class="metric-card">
                 <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Ingredients</p>
                 <h3 class="mt-3 font-display text-3xl font-semibold text-slate-900">{{ $inventoryItems->count() }}</h3>
             </article>
@@ -41,16 +41,16 @@
                 <p class="text-xs uppercase tracking-[0.3em] text-amber-800">Low Stock</p>
                 <h3 class="mt-3 font-display text-3xl font-semibold text-slate-900">{{ $inventoryItems->filter(fn ($item) => $item->stock <= $item->reorder_level)->count() }}</h3>
             </article>
-            <article class="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm">
+            <article class="metric-card">
                 <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Units Tracked</p>
                 <h3 class="mt-3 font-display text-3xl font-semibold text-slate-900">{{ $inventoryItems->pluck('unit')->unique()->count() }}</h3>
             </article>
         </div>
 
-        <div class="mt-6 rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="panel-card mt-6 rounded-[30px]">
             <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Stock List</p>
+                    <p class="section-kicker">Stock List</p>
                     <h3 class="mt-2 font-display text-2xl font-semibold text-slate-900">Manage ingredient levels</h3>
                 </div>
                 <p class="text-sm text-slate-500">Keep this page focused on ingredients, stock amounts, and reorder points.</p>
@@ -58,7 +58,7 @@
 
             <div class="mt-6 space-y-3">
                 @foreach ($inventoryItems as $item)
-                    <article class="rounded-[24px] bg-slate-50 px-4 py-4">
+                    <article class="panel-soft rounded-[24px] px-4 py-4">
                         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <div class="min-w-0">
                                 <div class="flex flex-wrap items-center gap-2">
@@ -77,7 +77,7 @@
                             <div class="flex items-center gap-3">
                                 <button
                                     type="button"
-                                    class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                                    class="primary-action px-4 py-2"
                                     @click="openModal('edit', {{ Js::from($item) }})"
                                 >
                                     Edit
@@ -151,8 +151,8 @@
                             Editing: <span class="font-semibold text-slate-900" x-text="selectedItem?.name"></span>
                         </div>
                         <div class="flex gap-3">
-                            <button type="button" @click="closeModal()" class="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700">Cancel</button>
-                            <button type="submit" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white" x-text="modalMode === 'edit' ? 'Save changes' : 'Add ingredient'"></button>
+                            <button type="button" @click="closeModal()" class="secondary-action">Cancel</button>
+                            <button type="submit" class="primary-action" x-text="modalMode === 'edit' ? 'Save changes' : 'Add ingredient'"></button>
                         </div>
                     </div>
                 </form>

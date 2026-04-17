@@ -21,7 +21,7 @@
                         </div>
                         <div class="flex items-center gap-4">
                             <p class="font-semibold text-slate-900">PHP {{ number_format((float) $transaction->total_amount, 2) }}</p>
-                            <a href="{{ route('cashier.receipt.show', $transaction) }}" class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Receipt</a>
+                            <a href="{{ route('cashier.receipt.show', $transaction) }}" class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">View</a>
                         </div>
                     </div>
                 @empty

@@ -20,8 +20,7 @@
     >
         <div class="flex h-full flex-col gap-6 p-5 lg:p-6">
             <div class="flex items-center justify-between gap-3">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-3" @click="sidebarOpen = false">
-                    <span class="flex h-14 w-14 items-center justify-center rounded-[22px] bg-slate-900 text-lg font-bold text-white">BT</span>
+                <a href="{{ route('dashboard') }}" class="flex min-w-0 flex-1 items-center" @click="sidebarOpen = false">
                     <span>
                         <span class="block font-display text-lg font-semibold text-slate-900">Boba Terminal</span>
                         <span class="block text-xs uppercase tracking-[0.3em] text-amber-600">{{ Auth::user()->isAdmin() ? 'Admin' : 'Cashier' }}</span>
@@ -68,8 +67,11 @@
                             <p class="truncate text-sm text-slate-500">{{ Auth::user()->email }}</p>
                         </div>
                     </div>
-                    <div class="mt-4 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-700">
-                        {{ Auth::user()->role }}
+                    <div class="mt-4 flex items-center justify-between gap-3">
+                        <span class="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-700">
+                            {{ Auth::user()->role }}
+                        </span>
+                        <span class="text-sm font-medium text-slate-500">POS Cashier</span>
                     </div>
                 </div>
             @endif
@@ -90,18 +92,12 @@
                         <a href="{{ route('admin.sales.index') }}" @click="sidebarOpen = false" class="block rounded-2xl px-4 py-3 text-sm font-medium {{ request()->routeIs('admin.sales.*') ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-[#e4eaf2] hover:text-slate-900' }}">
                             Sales
                         </a>
-                        <a href="{{ route('admin.voids.index') }}" @click="sidebarOpen = false" class="block rounded-2xl px-4 py-3 text-sm font-medium {{ request()->routeIs('admin.voids.*') ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-[#e4eaf2] hover:text-slate-900' }}">
-                            Void Requests
-                        </a>
                     @else
                         <a href="{{ route('cashier.pos') }}" @click="sidebarOpen = false" class="block rounded-2xl px-4 py-3 text-sm font-medium {{ request()->routeIs('cashier.pos') ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-[#e4eaf2] hover:text-slate-900' }}">
                             Dashboard
                         </a>
                         <a href="{{ route('cashier.transactions.index') }}" @click="sidebarOpen = false" class="block rounded-2xl px-4 py-3 text-sm font-medium {{ request()->routeIs('cashier.transactions.*') || request()->routeIs('cashier.receipt.*') ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-[#e4eaf2] hover:text-slate-900' }}">
                             Transactions
-                        </a>
-                        <a href="{{ route('profile.edit') }}" @click="sidebarOpen = false" class="block rounded-2xl px-4 py-3 text-sm font-medium {{ request()->routeIs('profile.*') ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-[#e4eaf2] hover:text-slate-900' }}">
-                            Profile
                         </a>
                     @endif
                 </div>

@@ -24,6 +24,8 @@
         'defaultSugarLevels' => $defaultSugarLevels,
         'defaultIceLevels' => $defaultIceLevels,
         'defaultAddOnOptions' => $defaultAddOnOptions,
+        'oldCart' => old('cart'),
+        'oldPaymentMethod' => old('payment_method'),
         'oldAmountReceived' => old('amount_received', ''),
     ]) }})">
         @if ($errors->any() && !$errors->has('amount_received'))
@@ -33,21 +35,21 @@
         <div class="grid gap-6 2xl:grid-cols-[minmax(0,1.95fr)_420px]">
             <div class="space-y-6">
                 <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <article class="rounded-[26px] border border-slate-200 bg-slate-900 p-6 text-white"><p class="text-xs uppercase tracking-[0.3em] text-slate-300">Orders Today</p><h3 class="mt-4 font-display text-3xl font-semibold">{{ $ordersToday }}</h3><p class="mt-2 text-sm text-slate-300">Completed sales</p></article>
-                    <article class="rounded-[26px] border border-slate-200 bg-white p-6 shadow-sm"><p class="text-xs uppercase tracking-[0.3em] text-slate-400">Sales Today</p><h3 class="mt-4 font-display text-3xl font-semibold text-slate-900">PHP {{ number_format($salesToday, 2) }}</h3><p class="mt-2 text-sm text-slate-500">Saved transactions</p></article>
-                    <article class="rounded-[26px] border border-slate-200 bg-white p-6 shadow-sm"><p class="text-xs uppercase tracking-[0.3em] text-slate-400">Change</p><h3 class="mt-4 font-display text-3xl font-semibold text-slate-900" x-text="formattedChange"></h3><p class="mt-2 text-sm text-slate-500">Based on amount received</p></article>
+                    <article class="metric-card-dark p-6"><p class="text-xs uppercase tracking-[0.3em] text-slate-300">Orders Today</p><h3 class="mt-4 font-display text-3xl font-semibold">{{ $ordersToday }}</h3><p class="mt-2 text-sm text-slate-300">Completed sales</p></article>
+                    <article class="metric-card p-6"><p class="text-xs uppercase tracking-[0.3em] text-slate-400">Sales Today</p><h3 class="mt-4 font-display text-3xl font-semibold text-slate-900">PHP {{ number_format($salesToday, 2) }}</h3><p class="mt-2 text-sm text-slate-500">Saved transactions</p></article>
+                    <article class="metric-card p-6"><p class="text-xs uppercase tracking-[0.3em] text-slate-400">Change</p><h3 class="mt-4 font-display text-3xl font-semibold text-slate-900" x-text="formattedChange"></h3><p class="mt-2 text-sm text-slate-500">Based on amount received</p></article>
                     <article class="rounded-[26px] border border-teal-300 bg-teal-100 p-6 shadow-sm"><p class="text-xs uppercase tracking-[0.3em] text-teal-900">Avg Ticket</p><h3 class="mt-4 font-display text-3xl font-semibold text-slate-950">PHP {{ number_format($averageTicket, 2) }}</h3><p class="mt-2 text-sm font-medium text-teal-900">Today</p></article>
                 </section>
 
-                <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+                <section class="panel-card">
                     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                         <div>
-                            <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Products</p>
+                            <p class="section-kicker">Products</p>
                             <h3 class="mt-2 font-display text-2xl font-semibold text-slate-900">Tap a product to customize</h3>
                         </div>
                         <div class="flex flex-wrap gap-2 text-sm">
                             <template x-for="category in categories" :key="category.id">
-                                <button type="button" class="rounded-full px-4 py-2 font-medium" :class="selectedCategoryId === category.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'" @click="selectedCategoryId = category.id" x-text="category.name"></button>
+                                <button type="button" class="pill-tab" :class="selectedCategoryId === category.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'" @click="selectedCategoryId = category.id" x-text="category.name"></button>
                             </template>
                         </div>
                     </div>
@@ -75,11 +77,11 @@
                     </div>
                 </section>
 
-                <section class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-                    <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Recent Sales</p>
+                <section class="panel-card">
+                    <p class="section-kicker">Recent Sales</p>
                     <h3 class="mt-2 font-display text-2xl font-semibold text-slate-900">Your transactions</h3>
                     <div class="mt-6 space-y-3">
-                        @forelse ($recentTransactions as $transaction)
+                        @forelse ($recentTransactions->take(3) as $transaction)
                             <a href="{{ route('cashier.receipt.show', $transaction) }}" class="block rounded-[22px] bg-slate-50 px-4 py-4 transition hover:bg-slate-100">
                                 <div class="flex items-center justify-between gap-3">
                                     <div>
@@ -93,6 +95,14 @@
                             <div class="rounded-[22px] bg-slate-50 px-4 py-4 text-sm text-slate-500">No transactions yet.</div>
                         @endforelse
                     </div>
+
+                    @if ($recentTransactions->count() > 3)
+                        <div class="mt-5 flex justify-end">
+                            <a href="{{ route('cashier.transactions.index') }}" class="secondary-action px-4 py-3">
+                                Show more
+                            </a>
+                        </div>
+                    @endif
                 </section>
             </div>
 
@@ -170,7 +180,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="mt-6 w-full rounded-[20px] bg-white px-5 py-4 text-sm font-semibold text-slate-900" :disabled="cart.length === 0">Complete payment</button>
+                        <button type="submit" class="mt-6 w-full rounded-[20px] bg-white px-5 py-4 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60" :disabled="cart.length === 0">Complete payment</button>
                 </form>
             </aside>
         </div>
@@ -255,8 +265,8 @@
                 <div class="mt-5 flex flex-wrap items-center justify-between gap-4">
                     <p class="text-sm text-slate-500">Unit price: <span class="font-semibold text-slate-900" x-text="formatCurrency(builderUnitPrice)"></span></p>
                     <div class="flex gap-3">
-                        <button type="button" @click="closeCustomizer()" class="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700">Cancel</button>
-                        <button type="button" @click="addToCart()" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white">Add to cart</button>
+                        <button type="button" @click="closeCustomizer()" class="secondary-action">Cancel</button>
+                        <button type="button" @click="addToCart()" class="primary-action">Add to cart</button>
                     </div>
                 </div>
             </div>
@@ -274,10 +284,13 @@
                 defaultAddOnOptions: config.defaultAddOnOptions,
                 selectedCategoryId: config.categories[0]?.id ?? null,
                 selectedProduct: null,
-                paymentMethod: config.paymentMethods[0] ?? 'cash',
+                paymentMethod: config.oldPaymentMethod ?? config.paymentMethods[0] ?? 'cash',
                 amountReceived: config.oldAmountReceived ?? '',
                 cart: [],
                 builder: { quantity: 1, size: 'Medium', sugar_level: '50%', ice_level: 'Normal Ice', add_ons: [], notes: '' },
+                init() {
+                    this.cart = this.parseOldCart(config.oldCart);
+                },
                 get filteredProducts() { return this.products.filter(product => product.category_id === this.selectedCategoryId); },
                 get selectedSugarLevels() {
                     return this.selectedProduct?.sugar_levels?.length ? this.selectedProduct.sugar_levels : this.defaultSugarLevels;
@@ -304,6 +317,17 @@
                 get formattedTotal() { return this.formatCurrency(this.total); },
                 get formattedChange() { return this.formatCurrency(Math.max(this.change, 0)); },
                 formatCurrency(value) { return `PHP ${Number(value || 0).toFixed(2)}`; },
+                parseOldCart(oldCart) {
+                    if (!oldCart) return [];
+
+                    try {
+                        const parsed = JSON.parse(oldCart);
+
+                        return Array.isArray(parsed) ? parsed : [];
+                    } catch (error) {
+                        return [];
+                    }
+                },
                 selectProduct(product) {
                     this.selectedProduct = product;
                     this.builder = {

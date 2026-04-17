@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex items-center justify-between gap-4">
             <div>
-                <p class="text-[11px] font-semibold uppercase tracking-[0.35em] text-amber-600">Receipt</p>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.35em] text-amber-600">Transaction Details</p>
                 <h2 class="font-display text-2xl font-semibold leading-tight text-slate-900">{{ $transaction->receipt_number }}</h2>
             </div>
             <div class="flex items-center gap-3">

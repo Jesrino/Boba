@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\InventoryItem;
 use App\Models\Product;
 use App\Models\Transaction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class CashierPosController extends Controller
@@ -25,6 +27,13 @@ class CashierPosController extends Controller
         'Cheese Foam' => 30,
         'Grass Jelly' => 15,
         'Oat Milk' => 25,
+    ];
+
+    private const SIZE_USAGE_MULTIPLIER = [
+        'Regular' => 1.0,
+        'Small' => 1.0,
+        'Medium' => 1.15,
+        'Large' => 1.3,
     ];
 
     public function index(Request $request): View
@@ -86,6 +95,7 @@ class CashierPosController extends Controller
         abort_if($cart->isEmpty(), 422, 'Cart is empty.');
 
         $lineItems = $this->buildLineItems($cart);
+        $inventoryUsage = $this->buildInventoryUsage($lineItems);
         $subtotal = $lineItems->sum('line_total');
         $discountAmount = 0;
         $taxAmount = round($subtotal * 0.12, 2);
@@ -104,6 +114,7 @@ class CashierPosController extends Controller
             $request,
             $validated,
             $lineItems,
+            $inventoryUsage,
             $subtotal,
             $discountAmount,
             $taxAmount,
@@ -139,6 +150,30 @@ class CashierPosController extends Controller
                     'line_total' => $item['line_total'],
                 ])->all()
             );
+
+            foreach ($inventoryUsage as $itemName => $usage) {
+                $inventoryItem = InventoryItem::query()
+                    ->where('name', $itemName)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $inventoryItem) {
+                    continue;
+                }
+
+                if ((float) $inventoryItem->stock < $usage) {
+                    throw ValidationException::withMessages([
+                        'cart' => sprintf(
+                            'Not enough %s in inventory. Available: %s %s.',
+                            $inventoryItem->name,
+                            rtrim(rtrim(number_format((float) $inventoryItem->stock, 2), '0'), '.'),
+                            $inventoryItem->unit
+                        ),
+                    ]);
+                }
+
+                $inventoryItem->decrement('stock', $usage);
+            }
 
             return $transaction;
         });
@@ -226,5 +261,61 @@ class CashierPosController extends Controller
     private function generateReceiptNumber(): string
     {
         return 'R'.now()->format('YmdHis').random_int(10, 99);
+    }
+
+    private function buildInventoryUsage(Collection $lineItems): Collection
+    {
+        return $lineItems
+            ->reduce(function (Collection $totals, array $item): Collection {
+                $product = Product::query()->with('category')->findOrFail($item['product_id']);
+                $sizeMultiplier = self::SIZE_USAGE_MULTIPLIER[$item['size']] ?? 1.0;
+                $quantity = max(1, (int) $item['quantity']);
+                $baseUsage = [];
+                $productName = strtolower($product->name);
+                $categoryName = strtolower((string) $product->category?->name);
+
+                if ($categoryName === 'milk tea' || str_contains($productName, 'milk tea') || str_contains($productName, 'latte')) {
+                    $baseUsage['Jasmine Tea'] = 0.03 * $sizeMultiplier * $quantity;
+                }
+
+                if ($categoryName === 'fruit tea' || str_contains($productName, 'fruit tea') || str_contains($productName, 'lemon tea')) {
+                    $baseUsage['Jasmine Tea'] = 0.025 * $sizeMultiplier * $quantity;
+                }
+
+                if (str_contains($productName, 'jasmine')) {
+                    $baseUsage['Jasmine Tea'] = ($baseUsage['Jasmine Tea'] ?? 0) + (0.01 * $sizeMultiplier * $quantity);
+                }
+
+                if (str_contains($productName, 'matcha')) {
+                    $baseUsage['Matcha Powder'] = 0.03 * $sizeMultiplier * $quantity;
+                }
+
+                if (str_contains($productName, 'brown sugar boba')) {
+                    $baseUsage['Brown Sugar Pearls'] = 0.08 * $sizeMultiplier * $quantity;
+                }
+
+                foreach ($item['add_ons'] as $addOn) {
+                    $addOnName = strtolower((string) $addOn);
+
+                    if ($addOnName === 'pearls') {
+                        $baseUsage['Brown Sugar Pearls'] = ($baseUsage['Brown Sugar Pearls'] ?? 0) + (0.03 * $quantity);
+                    }
+
+                    if ($addOnName === 'oat milk') {
+                        $baseUsage['Oat Milk'] = ($baseUsage['Oat Milk'] ?? 0) + (0.2 * $quantity);
+                    }
+
+                    if ($addOnName === 'cheese foam' && str_contains($productName, 'matcha')) {
+                        $baseUsage['Matcha Powder'] = ($baseUsage['Matcha Powder'] ?? 0) + (0.005 * $quantity);
+                    }
+                }
+
+                foreach ($baseUsage as $itemName => $amount) {
+                    $totals[$itemName] = round(((float) ($totals[$itemName] ?? 0)) + $amount, 2);
+                }
+
+                return $totals;
+            }, collect())
+            ->filter(fn (float $amount) => $amount > 0);
     }
 }

@@ -22,6 +22,9 @@ Route::middleware('auth')->group(function () {
             : redirect()->route('cashier.pos');
     })->name('pos.index');
 
+});
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -44,7 +47,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/inventory', [AdminController::class, 'storeInventoryItem'])->name('inventory.store');
     Route::put('/inventory/{inventoryItem}', [AdminController::class, 'updateInventoryItem'])->name('inventory.update');
     Route::get('/sales', [AdminController::class, 'sales'])->name('sales.index');
-    Route::get('/void-approvals', [AdminController::class, 'voidApprovals'])->name('voids.index');
 });
 
 require __DIR__.'/auth.php';

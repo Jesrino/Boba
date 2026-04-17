@@ -106,10 +106,10 @@ class DatabaseSeeder extends Seeder
         });
 
         collect([
-            ['name' => 'Brown Sugar Pearls', 'unit' => 'kg', 'stock' => 4, 'reorder_level' => 6],
-            ['name' => 'Oat Milk', 'unit' => 'liters', 'stock' => 8, 'reorder_level' => 10],
-            ['name' => 'Matcha Powder', 'unit' => 'kg', 'stock' => 2, 'reorder_level' => 3],
-            ['name' => 'Jasmine Tea', 'unit' => 'kg', 'stock' => 7, 'reorder_level' => 4],
+            ['name' => 'Brown Sugar Pearls', 'unit' => 'kg', 'stock' => 60, 'reorder_level' => 12],
+            ['name' => 'Oat Milk', 'unit' => 'liters', 'stock' => 80, 'reorder_level' => 15],
+            ['name' => 'Matcha Powder', 'unit' => 'kg', 'stock' => 35, 'reorder_level' => 6],
+            ['name' => 'Jasmine Tea', 'unit' => 'kg', 'stock' => 50, 'reorder_level' => 10],
         ])->each(function (array $item): void {
             InventoryItem::query()->updateOrCreate(
                 ['name' => $item['name']],
